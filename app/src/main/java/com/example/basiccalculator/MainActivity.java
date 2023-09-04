@@ -1,43 +1,19 @@
 package com.example.basiccalculator;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-
 import androidx.appcompat.app.AppCompatActivity;
-
-import java.util.Stack;
-
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Scriptable;
 
 public class MainActivity extends AppCompatActivity {
 
-    Button b1;
-    Button b2;
-    Button b3;
-    Button b4;
-    Button b5;
-    Button b6;
-    Button b7;
-    Button b8;
-    Button b9;
-    Button b0;
-
-    Button bac;
-    Button bbrac;
-    Button bmod;
-    Button bdiv;
-    Button bmulti;
-    Button bminus;
-    Button bplus;
-    Button bequal;
-
-    Button bdot;
-    Button bclr;
-
-    TextView input;
-    TextView output;
+    Button b1,b2,b3,b4,b5,b6,b7,b8,b9,b0,bac,bbrac,bmod,bdiv,bmulti,bminus,bplus,bequal,bdot,bclr;
+    TextView input,output;
     static final int[] open = {0};
 
     @Override
@@ -249,6 +225,7 @@ public class MainActivity extends AppCompatActivity {
             });
         }
         bequal.setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("SetTextI18n")
             @Override
             public void onClick(View view) {
 
@@ -261,7 +238,7 @@ public class MainActivity extends AppCompatActivity {
                         output.setText("Close the Brackets");
                     } else {
                         try {
-                            double result = evaluateExpression(ip[0]);
+                            String result = evaluateExpression(ip[0]);
                             System.out.println("Result: " + result);
                             String temp = "" + result;
                             output.setText(temp);
@@ -284,85 +261,15 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public static String evaluateExpression(String expression){
+        try{
+            Context context = Context.enter();
+            context.setOptimizationLevel(-1);
+            Scriptable scriptable = context.initStandardObjects();
+            return (context.evaluateString(scriptable,expression,"Javascript",1,null).toString());
 
-    public static double evaluateExpression(String expression) {
-        char[] tokens = expression.toCharArray();
-
-        Stack<Double> values = new Stack<>();
-        Stack<Character> operators = new Stack<>();
-
-        for (int i = 0; i < tokens.length; i++) {
-            if (tokens[i] == ' ') {
-                continue;
-            }
-
-            if (tokens[i] == '-' && (i == 0 || tokens[i - 1] == '(')) {
-                // Handle negative sign
-                StringBuilder num = new StringBuilder("-");
-                i++;
-                while (i < tokens.length && (tokens[i] >= '0' && tokens[i] <= '9' || tokens[i] == '.')) {
-                    num.append(tokens[i]);
-                    i++;
-                }
-                values.push(Double.parseDouble(num.toString()));
-                i--;
-            } else if (tokens[i] >= '0' && tokens[i] <= '9' || tokens[i] == '.') {
-                StringBuilder num = new StringBuilder();
-                while (i < tokens.length && (tokens[i] >= '0' && tokens[i] <= '9' || tokens[i] == '.')) {
-                    num.append(tokens[i]);
-                    i++;
-                }
-                values.push(Double.parseDouble(num.toString()));
-                i--;
-            } else if (tokens[i] == '(') {
-                operators.push(tokens[i]);
-            } else if (tokens[i] == ')') {
-                while (operators.peek() != '(') {
-                    values.push(applyOperator(operators.pop(), values.pop(), values.pop()));
-                }
-                operators.pop();
-            } else if (tokens[i] == '+' || tokens[i] == '-') {
-                while (!operators.isEmpty() && operators.peek() != '(') {
-                    values.push(applyOperator(operators.pop(), values.pop(), values.pop()));
-                }
-                operators.push(tokens[i]);
-            } else if (tokens[i] == '*' || tokens[i] == '/') {
-                while (!operators.isEmpty() && hasPrecedence(tokens[i], operators.peek())) {
-                    values.push(applyOperator(operators.pop(), values.pop(), values.pop()));
-                }
-                operators.push(tokens[i]);
-            }
+        }catch (Exception e){
+            return "Error";
         }
-
-        while (!operators.isEmpty()) {
-            values.push(applyOperator(operators.pop(), values.pop(), values.pop()));
-        }
-
-        return values.pop();
     }
-
-    public static boolean hasPrecedence(char op1, char op2) {
-        if (op2 == '(' || op2 == ')') {
-            return false;
-        }
-        return (op1 == '*' || op1 == '/') && (op2 == '+' || op2 == '-');
-    }
-
-    public static double applyOperator(char operator, double b, double a) {
-        switch (operator) {
-            case '+':
-                return a + b;
-            case '-':
-                return a - b;
-            case '*':
-                return a * b;
-            case '/':
-                if (b == 0) {
-                    throw new ArithmeticException("Division by zero");
-                }
-                return a / b;
-        }
-        return 0;
-    }
-
 }
